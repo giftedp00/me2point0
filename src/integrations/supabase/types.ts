@@ -40,22 +40,58 @@ export type Database = {
       }
       profiles: {
         Row: {
+          communication_style: string | null
           created_at: string
           display_name: string | null
+          focus_areas: string[] | null
           id: string
+          onboarded_at: string | null
+          preferred_name: string | null
+          sleep_time: string | null
+          timezone: string | null
+          tone_preference: string | null
+          top_goals: string | null
           updated_at: string
+          values_notes: string | null
+          wake_time: string | null
+          work_hours: string | null
+          work_role: string | null
         }
         Insert: {
+          communication_style?: string | null
           created_at?: string
           display_name?: string | null
+          focus_areas?: string[] | null
           id: string
+          onboarded_at?: string | null
+          preferred_name?: string | null
+          sleep_time?: string | null
+          timezone?: string | null
+          tone_preference?: string | null
+          top_goals?: string | null
           updated_at?: string
+          values_notes?: string | null
+          wake_time?: string | null
+          work_hours?: string | null
+          work_role?: string | null
         }
         Update: {
+          communication_style?: string | null
           created_at?: string
           display_name?: string | null
+          focus_areas?: string[] | null
           id?: string
+          onboarded_at?: string | null
+          preferred_name?: string | null
+          sleep_time?: string | null
+          timezone?: string | null
+          tone_preference?: string | null
+          top_goals?: string | null
           updated_at?: string
+          values_notes?: string | null
+          wake_time?: string | null
+          work_hours?: string | null
+          work_role?: string | null
         }
         Relationships: []
       }

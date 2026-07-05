@@ -31,6 +31,15 @@ export const sendMessage = createServerFn({ method: "POST" })
       .insert({ user_id: userId, role: "user", content: data.text });
     if (insertErr) throw new Error(insertErr.message);
 
+    // Load profile for personalization
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select(
+        "preferred_name, timezone, focus_areas, top_goals, work_role, work_hours, wake_time, sleep_time, communication_style, tone_preference, values_notes",
+      )
+      .eq("id", userId)
+      .maybeSingle();
+
     // Load history (last 40 messages)
     const { data: history, error: histErr } = await supabase
       .from("chat_messages")
@@ -40,13 +49,28 @@ export const sendMessage = createServerFn({ method: "POST" })
       .limit(40);
     if (histErr) throw new Error(histErr.message);
 
+    const profileBlock = profile
+      ? `\n\nWhat you know about the user (from their onboarding — reference naturally, don't recite):
+- Preferred name: ${profile.preferred_name ?? "unknown"}
+- Timezone: ${profile.timezone ?? "unknown"}
+- Focus areas: ${(profile.focus_areas ?? []).join(", ") || "unspecified"}
+- Top goals right now: ${profile.top_goals ?? "unspecified"}
+- Work role: ${profile.work_role ?? "unspecified"}
+- Typical work hours: ${profile.work_hours ?? "unspecified"}
+- Wake time: ${profile.wake_time ?? "unspecified"} · Sleep time: ${profile.sleep_time ?? "unspecified"}
+- Preferred communication style: ${profile.communication_style ?? "unspecified"}
+- Tone preference: ${profile.tone_preference ?? "unspecified"}
+- Values / context: ${profile.values_notes ?? "unspecified"}`
+      : "";
+
     const messages: ChatMessage[] = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: SYSTEM_PROMPT + profileBlock },
       ...(history ?? []).map((m) => ({
         role: m.role as ChatMessage["role"],
         content: m.content,
       })),
     ];
+
 
     const reply = await chatCompletion(messages);
 

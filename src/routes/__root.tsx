@@ -80,11 +80,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "me2.0 — Your AI Executive Assistant" },
-      { name: "description", content: "me2.0 remembers what matters, understands your goals, and helps you make better decisions every day. Your life. Upgraded." },
+      { name: "description", content: "me2.0
+
+Your Personal AI Executive Assistant.
+
+Organize your life. Achieve your goals. Become the best version of yourself." },
       { property: "og:title", content: "me2.0 — Your AI Executive Assistant" },
-      { property: "og:description", content: "Your life. Upgraded. A premium AI executive assistant for work, family, finances, health and goals." },
+      { property: "og:description", content: "me2.0
+
+Your Personal AI Executive Assistant.
+
+Organize your life. Achieve your goals. Become the best version of yourself." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "me2.0 — Your AI Executive Assistant" },
+      { name: "twitter:description", content: "me2.0
+
+Your Personal AI Executive Assistant.
+
+Organize your life. Achieve your goals. Become the best version of yourself." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/d5ee966b-0f03-44a8-a70a-dff5c56cedec" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/d5ee966b-0f03-44a8-a70a-dff5c56cedec" },
     ],
     links: [
       {

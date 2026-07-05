@@ -23,6 +23,7 @@ import { useSession } from "@/hooks/use-session";
 import { useVoiceRecorder, speak } from "@/hooks/use-voice";
 import { supabase } from "@/integrations/supabase/client";
 import { clearHistory, getHistory, sendMessage } from "@/lib/chat.functions";
+import { getProfile } from "@/lib/profile.functions";
 import mark from "@/assets/me2-mark.png";
 
 export const Route = createFileRoute("/")({
@@ -32,12 +33,25 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
+  const getProfileFn = useServerFn(getProfile);
+
+  const profileQ = useQuery({
+    queryKey: ["profile"],
+    queryFn: () => getProfileFn({ data: undefined }),
+    enabled: !!session,
+  });
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth" });
   }, [loading, session, navigate]);
 
-  if (loading || !session) {
+  useEffect(() => {
+    if (session && profileQ.data && !profileQ.data.onboarded_at) {
+      navigate({ to: "/onboarding" });
+    }
+  }, [session, profileQ.data, navigate]);
+
+  if (loading || !session || profileQ.isLoading || (profileQ.data && !profileQ.data.onboarded_at)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -45,7 +59,12 @@ function Home() {
     );
   }
 
-  return <AssistantApp displayName={session.user.user_metadata?.full_name ?? session.user.email?.split("@")[0] ?? "there"} />;
+  const name =
+    profileQ.data?.preferred_name ??
+    session.user.user_metadata?.full_name ??
+    session.user.email?.split("@")[0] ??
+    "there";
+  return <AssistantApp displayName={name} />;
 }
 
 type UIMsg = { id: string; role: "user" | "assistant" | "system"; content: string; created_at?: string };

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { useSession } from "@/hooks/use-session";
 import { getProfile, saveOnboarding } from "@/lib/profile.functions";
+import { skipConnections } from "@/lib/integrations.functions";
 import { ConnectionsPanel } from "@/components/connections-panel";
 import mark from "@/assets/me2-mark.png";
 

@@ -68,7 +68,7 @@ function Home() {
     session.user.user_metadata?.full_name ??
     session.user.email?.split("@")[0] ??
     "there";
-  return <AssistantApp displayName={name} />;
+  return <AssistantApp displayName={name} skippedConnections={!!profileQ.data?.connections_skipped_at} />;
 }
 
 type UIMsg = { id: string; role: "user" | "assistant" | "system"; content: string; created_at?: string };

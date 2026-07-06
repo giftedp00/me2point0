@@ -78,9 +78,10 @@ export const updateNotificationPref = createServerFn({ method: "POST" })
       );
     if (upErr) throw new Error(upErr.message);
     // Then set the specific key (upsert above would overwrite others on first insert only).
+    const patch: Record<string, boolean> = { [data.key]: data.value };
     const { error } = await supabase
       .from("notification_preferences")
-      .update({ [data.key]: data.value })
+      .update(patch as never)
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };

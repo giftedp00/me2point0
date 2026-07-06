@@ -38,9 +38,103 @@ export type Database = {
         }
         Relationships: []
       }
+      connected_accounts: {
+        Row: {
+          access_token_ciphertext: string | null
+          account_type: string
+          connected_at: string
+          created_at: string
+          email_address: string | null
+          id: string
+          is_active: boolean
+          last_synced: string | null
+          refresh_token_ciphertext: string | null
+          scope: string | null
+          token_iv: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token_ciphertext?: string | null
+          account_type: string
+          connected_at?: string
+          created_at?: string
+          email_address?: string | null
+          id?: string
+          is_active?: boolean
+          last_synced?: string | null
+          refresh_token_ciphertext?: string | null
+          scope?: string | null
+          token_iv?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token_ciphertext?: string | null
+          account_type?: string
+          connected_at?: string
+          created_at?: string
+          email_address?: string | null
+          id?: string
+          is_active?: boolean
+          last_synced?: string | null
+          refresh_token_ciphertext?: string | null
+          scope?: string | null
+          token_iv?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          ai_event_suggestions: boolean
+          conflict_warnings: boolean
+          created_at: string
+          draft_replies: boolean
+          event_reminders: boolean
+          id: string
+          key_contact_alerts: boolean
+          morning_schedule_briefing: boolean
+          summarize_emails_daily: boolean
+          updated_at: string
+          urgent_email_alerts: boolean
+          user_id: string
+        }
+        Insert: {
+          ai_event_suggestions?: boolean
+          conflict_warnings?: boolean
+          created_at?: string
+          draft_replies?: boolean
+          event_reminders?: boolean
+          id?: string
+          key_contact_alerts?: boolean
+          morning_schedule_briefing?: boolean
+          summarize_emails_daily?: boolean
+          updated_at?: string
+          urgent_email_alerts?: boolean
+          user_id: string
+        }
+        Update: {
+          ai_event_suggestions?: boolean
+          conflict_warnings?: boolean
+          created_at?: string
+          draft_replies?: boolean
+          event_reminders?: boolean
+          id?: string
+          key_contact_alerts?: boolean
+          morning_schedule_briefing?: boolean
+          summarize_emails_daily?: boolean
+          updated_at?: string
+          urgent_email_alerts?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           communication_style: string | null
+          connections_skipped_at: string | null
           created_at: string
           display_name: string | null
           focus_areas: string[] | null
@@ -59,6 +153,7 @@ export type Database = {
         }
         Insert: {
           communication_style?: string | null
+          connections_skipped_at?: string | null
           created_at?: string
           display_name?: string | null
           focus_areas?: string[] | null
@@ -77,6 +172,7 @@ export type Database = {
         }
         Update: {
           communication_style?: string | null
+          connections_skipped_at?: string | null
           created_at?: string
           display_name?: string | null
           focus_areas?: string[] | null

@@ -73,16 +73,26 @@ function Home() {
 
 type UIMsg = { id: string; role: "user" | "assistant" | "system"; content: string; created_at?: string };
 
-function AssistantApp({ displayName }: { displayName: string }) {
+function AssistantApp({ displayName, skippedConnections }: { displayName: string; skippedConnections: boolean }) {
   const qc = useQueryClient();
   const getHistoryFn = useServerFn(getHistory);
   const sendMessageFn = useServerFn(sendMessage);
   const clearHistoryFn = useServerFn(clearHistory);
+  const getConnectedAccountsFn = useServerFn(getConnectedAccounts);
 
   const historyQ = useQuery({
     queryKey: ["chat-history"],
     queryFn: () => getHistoryFn({ data: undefined }),
   });
+
+  const accountsQ = useQuery({
+    queryKey: ["connected-accounts"],
+    queryFn: () => getConnectedAccountsFn({ data: undefined }),
+  });
+
+  const anyConnected = (accountsQ.data ?? []).some((a) => a.is_active);
+  const showConnectBanner = skippedConnections && !anyConnected;
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const [input, setInput] = useState("");
   const [voiceReply, setVoiceReply] = useState(false);

@@ -313,6 +313,16 @@ function OnboardingPage() {
       ),
       canNext: () => true,
     },
+    {
+      title: "Connect your world",
+      subtitle: "Link Gmail and Google Calendar so me2.0 can actually help you run your day.",
+      body: (
+        <div className="space-y-4">
+          <ConnectionsPanel />
+        </div>
+      ),
+      canNext: () => true,
+    },
   ];
 
   const current = steps[step];

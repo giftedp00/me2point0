@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -16,6 +16,9 @@ import {
   Wallet,
   Loader2,
   Users,
+  Settings as SettingsIcon,
+  Link2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,6 +27,7 @@ import { useVoiceRecorder, speak } from "@/hooks/use-voice";
 import { supabase } from "@/integrations/supabase/client";
 import { clearHistory, getHistory, sendMessage } from "@/lib/chat.functions";
 import { getProfile } from "@/lib/profile.functions";
+import { getConnectedAccounts } from "@/lib/integrations.functions";
 import mark from "@/assets/me2-mark.png";
 
 export const Route = createFileRoute("/")({
@@ -64,21 +68,31 @@ function Home() {
     session.user.user_metadata?.full_name ??
     session.user.email?.split("@")[0] ??
     "there";
-  return <AssistantApp displayName={name} />;
+  return <AssistantApp displayName={name} skippedConnections={!!profileQ.data?.connections_skipped_at} />;
 }
 
 type UIMsg = { id: string; role: "user" | "assistant" | "system"; content: string; created_at?: string };
 
-function AssistantApp({ displayName }: { displayName: string }) {
+function AssistantApp({ displayName, skippedConnections }: { displayName: string; skippedConnections: boolean }) {
   const qc = useQueryClient();
   const getHistoryFn = useServerFn(getHistory);
   const sendMessageFn = useServerFn(sendMessage);
   const clearHistoryFn = useServerFn(clearHistory);
+  const getConnectedAccountsFn = useServerFn(getConnectedAccounts);
 
   const historyQ = useQuery({
     queryKey: ["chat-history"],
     queryFn: () => getHistoryFn({ data: undefined }),
   });
+
+  const accountsQ = useQuery({
+    queryKey: ["connected-accounts"],
+    queryFn: () => getConnectedAccountsFn({ data: undefined }),
+  });
+
+  const anyConnected = (accountsQ.data ?? []).some((a) => a.is_active);
+  const showConnectBanner = skippedConnections && !anyConnected;
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const [input, setInput] = useState("");
   const [voiceReply, setVoiceReply] = useState(false);
@@ -190,6 +204,13 @@ function AssistantApp({ displayName }: { displayName: string }) {
               Clear
             </button>
           )}
+          <Link
+            to="/settings"
+            title="Settings"
+            className="rounded-full p-2 text-muted-foreground hover:text-foreground"
+          >
+            <SettingsIcon className="h-4 w-4" />
+          </Link>
           <button
             type="button"
             onClick={onSignOut}
@@ -200,6 +221,31 @@ function AssistantApp({ displayName }: { displayName: string }) {
           </button>
         </div>
       </header>
+
+      {showConnectBanner && !bannerDismissed && (
+        <div className="relative mx-auto mb-2 max-w-3xl px-5">
+          <div className="flex items-center gap-3 rounded-2xl border border-brass/30 bg-brass/10 px-4 py-2.5 text-sm">
+            <Link2 className="h-4 w-4 shrink-0 text-brass" />
+            <p className="flex-1 text-foreground/85">
+              Connect Gmail and Calendar to unlock your full me2.0 experience.
+            </p>
+            <Link
+              to="/settings"
+              className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-soft hover:opacity-95"
+            >
+              Connect
+            </Link>
+            <button
+              type="button"
+              onClick={() => setBannerDismissed(true)}
+              aria-label="Dismiss"
+              className="rounded-full p-1 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <main
         ref={scrollRef}

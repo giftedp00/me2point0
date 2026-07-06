@@ -7,6 +7,8 @@ import { toast } from "sonner";
 
 import { useSession } from "@/hooks/use-session";
 import { getProfile, saveOnboarding } from "@/lib/profile.functions";
+import { skipConnections } from "@/lib/integrations.functions";
+import { ConnectionsPanel } from "@/components/connections-panel";
 import mark from "@/assets/me2-mark.png";
 
 export const Route = createFileRoute("/onboarding")({
@@ -109,9 +111,14 @@ function OnboardingPage() {
     }));
   }, [profileQ.data, defaultName, tz, loading]);
 
+  const skipFn = useServerFn(skipConnections);
+
   const save = useMutation({
-    mutationFn: async () =>
-      saveFn({
+    mutationFn: async (opts: { skipConnections?: boolean } = {}) => {
+      if (opts.skipConnections) {
+        try { await skipFn({ data: undefined }); } catch { /* non-fatal */ }
+      }
+      return saveFn({
         data: {
           preferred_name: form.preferred_name.trim() || defaultName || "friend",
           timezone: form.timezone || null,
@@ -125,7 +132,8 @@ function OnboardingPage() {
           tone_preference: form.tone_preference || null,
           values_notes: form.values_notes || null,
         },
-      }),
+      });
+    },
     onSuccess: () => {
       toast.success("me2.0 is ready");
       navigate({ to: "/" });
@@ -312,6 +320,16 @@ function OnboardingPage() {
       ),
       canNext: () => true,
     },
+    {
+      title: "Connect your world",
+      subtitle: "Link Gmail and Google Calendar so me2.0 can actually help you run your day.",
+      body: (
+        <div className="space-y-4">
+          <ConnectionsPanel />
+        </div>
+      ),
+      canNext: () => true,
+    },
   ];
 
   const current = steps[step];
@@ -331,7 +349,7 @@ function OnboardingPage() {
         </div>
         <button
           type="button"
-          onClick={() => save.mutate()}
+          onClick={() => save.mutate({})}
           disabled={save.isPending}
           className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
@@ -385,15 +403,25 @@ function OnboardingPage() {
               Continue <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => save.mutate()}
-              disabled={save.isPending}
-              className="flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-soft transition hover:opacity-95 disabled:opacity-40"
-            >
-              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkle className="h-4 w-4" />}
-              Finish setup
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => save.mutate({ skipConnections: true })}
+                disabled={save.isPending}
+                className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-40"
+              >
+                I'll connect these later
+              </button>
+              <button
+                type="button"
+                onClick={() => save.mutate({})}
+                disabled={save.isPending}
+                className="flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-soft transition hover:opacity-95 disabled:opacity-40"
+              >
+                {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkle className="h-4 w-4" />}
+                Finish setup
+              </button>
+            </div>
           )}
         </div>
       </main>

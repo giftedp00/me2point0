@@ -111,9 +111,14 @@ function OnboardingPage() {
     }));
   }, [profileQ.data, defaultName, tz, loading]);
 
+  const skipFn = useServerFn(skipConnections);
+
   const save = useMutation({
-    mutationFn: async () =>
-      saveFn({
+    mutationFn: async (opts: { skipConnections?: boolean } = {}) => {
+      if (opts.skipConnections) {
+        try { await skipFn({ data: undefined }); } catch { /* non-fatal */ }
+      }
+      return saveFn({
         data: {
           preferred_name: form.preferred_name.trim() || defaultName || "friend",
           timezone: form.timezone || null,
@@ -127,7 +132,8 @@ function OnboardingPage() {
           tone_preference: form.tone_preference || null,
           values_notes: form.values_notes || null,
         },
-      }),
+      });
+    },
     onSuccess: () => {
       toast.success("me2.0 is ready");
       navigate({ to: "/" });

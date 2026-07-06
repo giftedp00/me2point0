@@ -403,15 +403,25 @@ function OnboardingPage() {
               Continue <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => save.mutate()}
-              disabled={save.isPending}
-              className="flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-soft transition hover:opacity-95 disabled:opacity-40"
-            >
-              {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkle className="h-4 w-4" />}
-              Finish setup
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => save.mutate({ skipConnections: true })}
+                disabled={save.isPending}
+                className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-40"
+              >
+                I'll connect these later
+              </button>
+              <button
+                type="button"
+                onClick={() => save.mutate({})}
+                disabled={save.isPending}
+                className="flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-soft transition hover:opacity-95 disabled:opacity-40"
+              >
+                {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkle className="h-4 w-4" />}
+                Finish setup
+              </button>
+            </div>
           )}
         </div>
       </main>

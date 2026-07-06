@@ -69,12 +69,12 @@ export const updateNotificationPref = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => UpdatePrefInput.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // Ensure a row exists first.
+    // Ensure a row exists (defaults) without overwriting existing values.
     const { error: upErr } = await supabase
       .from("notification_preferences")
       .upsert(
-        { user_id: userId, ...DEFAULT_PREFS, [data.key]: data.value },
-        { onConflict: "user_id" },
+        { user_id: userId, ...DEFAULT_PREFS },
+        { onConflict: "user_id", ignoreDuplicates: true },
       );
     if (upErr) throw new Error(upErr.message);
     // Then set the specific key (upsert above would overwrite others on first insert only).

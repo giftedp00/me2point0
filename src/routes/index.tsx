@@ -204,6 +204,13 @@ function AssistantApp({ displayName, skippedConnections }: { displayName: string
               Clear
             </button>
           )}
+          <Link
+            to="/settings"
+            title="Settings"
+            className="rounded-full p-2 text-muted-foreground hover:text-foreground"
+          >
+            <SettingsIcon className="h-4 w-4" />
+          </Link>
           <button
             type="button"
             onClick={onSignOut}
@@ -214,6 +221,31 @@ function AssistantApp({ displayName, skippedConnections }: { displayName: string
           </button>
         </div>
       </header>
+
+      {showConnectBanner && !bannerDismissed && (
+        <div className="relative mx-auto mb-2 max-w-3xl px-5">
+          <div className="flex items-center gap-3 rounded-2xl border border-brass/30 bg-brass/10 px-4 py-2.5 text-sm">
+            <Link2 className="h-4 w-4 shrink-0 text-brass" />
+            <p className="flex-1 text-foreground/85">
+              Connect Gmail and Calendar to unlock your full me2.0 experience.
+            </p>
+            <Link
+              to="/settings"
+              className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-soft hover:opacity-95"
+            >
+              Connect
+            </Link>
+            <button
+              type="button"
+              onClick={() => setBannerDismissed(true)}
+              aria-label="Dismiss"
+              className="rounded-full p-1 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <main
         ref={scrollRef}

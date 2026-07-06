@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -16,6 +16,9 @@ import {
   Wallet,
   Loader2,
   Users,
+  Settings as SettingsIcon,
+  Link2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,6 +27,7 @@ import { useVoiceRecorder, speak } from "@/hooks/use-voice";
 import { supabase } from "@/integrations/supabase/client";
 import { clearHistory, getHistory, sendMessage } from "@/lib/chat.functions";
 import { getProfile } from "@/lib/profile.functions";
+import { getConnectedAccounts } from "@/lib/integrations.functions";
 import mark from "@/assets/me2-mark.png";
 
 export const Route = createFileRoute("/")({

@@ -349,7 +349,7 @@ function OnboardingPage() {
         </div>
         <button
           type="button"
-          onClick={() => save.mutate()}
+          onClick={() => save.mutate({})}
           disabled={save.isPending}
           className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
         >

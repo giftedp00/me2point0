@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useSession } from "@/hooks/use-session";
 import { ConnectionsPanel } from "@/components/connections-panel";
@@ -20,10 +22,25 @@ export const Route = createFileRoute("/settings")({
 function SettingsPage() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth" });
   }, [loading, session, navigate]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get("connected");
+    const err = params.get("oauth_error");
+    if (connected) {
+      toast.success(`${connected === "gmail" ? "Gmail" : "Google Calendar"} connected`);
+      qc.invalidateQueries({ queryKey: ["connected-accounts"] });
+      window.history.replaceState({}, "", "/settings");
+    } else if (err) {
+      toast.error(`Couldn't connect: ${err}`);
+      window.history.replaceState({}, "", "/settings");
+    }
+  }, [qc]);
 
   if (loading || !session) {
     return (

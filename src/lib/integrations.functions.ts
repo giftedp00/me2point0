@@ -117,23 +117,38 @@ export const skipConnections = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Placeholder — real Google OAuth will land here once Client ID/Secret are configured.
-// Returns { configured: false } so the UI can show a friendly "coming soon" state.
 const StartOAuthInput = z.object({
   account_type: z.enum(["gmail", "google_calendar"]),
+  origin: z.string().url(),
 });
 
 export const startGoogleOAuth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => StartOAuthInput.parse(data))
-  .handler(async ({ context: _context }) => {
+  .handler(async ({ data, context }) => {
     const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
     if (!clientId || !clientSecret) {
       return { configured: false as const };
     }
-    // TODO: build authorize URL with the right scope set per account_type
-    // and return it to the client. Callback route stores encrypted tokens
-    // via encryptToken() from token-crypto.server.ts.
-    return { configured: false as const };
+    const { signState, GMAIL_SCOPES, CALENDAR_SCOPES } = await import("./oauth-state.server");
+    const scopes = data.account_type === "gmail" ? GMAIL_SCOPES : CALENDAR_SCOPES;
+    const redirectUri = `${data.origin}/api/public/oauth/google/callback`;
+    const state = signState({
+      uid: context.userId,
+      type: data.account_type,
+      redirect: `${data.origin}/settings?connected=${data.account_type}`,
+    });
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: scopes.join(" "),
+      access_type: "offline",
+      include_granted_scopes: "true",
+      prompt: "consent",
+      state,
+    });
+    const authorize_url = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    return { configured: true as const, authorize_url };
   });

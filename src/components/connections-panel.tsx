@@ -76,14 +76,17 @@ export function ConnectionsPanel({ compact = false }: { compact?: boolean }) {
   });
 
   const connect = useMutation({
-    mutationFn: async (t: AccountType) => startOAuthFn({ data: { account_type: t } }),
+    mutationFn: async (t: AccountType) =>
+      startOAuthFn({ data: { account_type: t, origin: window.location.origin } }),
     onSuccess: (data) => {
-      if (!data?.configured) {
-        toast.message("Almost ready", {
-          description:
-            "Google OAuth is being finalized for me2.0. Your preferences are saved — you'll be able to connect in a moment.",
-        });
+      if (data?.configured && "authorize_url" in data && data.authorize_url) {
+        window.location.href = data.authorize_url;
+        return;
       }
+      toast.message("Almost ready", {
+        description:
+          "Google OAuth isn't fully configured yet. Your preferences are saved — you'll be able to connect in a moment.",
+      });
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Couldn't start connection"),
   });

@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiVoiceTranscribeRouteImport } from './routes/api/voice/transcribe'
 import { Route as ApiVoiceSpeakRouteImport } from './routes/api/voice/speak'
+import { Route as ApiPublicOauthGoogleCallbackRouteImport } from './routes/api/public/oauth/google/callback'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -46,6 +47,12 @@ const ApiVoiceSpeakRoute = ApiVoiceSpeakRouteImport.update({
   path: '/api/voice/speak',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicOauthGoogleCallbackRoute =
+  ApiPublicOauthGoogleCallbackRouteImport.update({
+    id: '/api/public/oauth/google/callback',
+    path: '/api/public/oauth/google/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/api/voice/speak': typeof ApiVoiceSpeakRoute
   '/api/voice/transcribe': typeof ApiVoiceTranscribeRoute
+  '/api/public/oauth/google/callback': typeof ApiPublicOauthGoogleCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +70,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/api/voice/speak': typeof ApiVoiceSpeakRoute
   '/api/voice/transcribe': typeof ApiVoiceTranscribeRoute
+  '/api/public/oauth/google/callback': typeof ApiPublicOauthGoogleCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +80,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/api/voice/speak': typeof ApiVoiceSpeakRoute
   '/api/voice/transcribe': typeof ApiVoiceTranscribeRoute
+  '/api/public/oauth/google/callback': typeof ApiPublicOauthGoogleCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +91,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/voice/speak'
     | '/api/voice/transcribe'
+    | '/api/public/oauth/google/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +100,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/voice/speak'
     | '/api/voice/transcribe'
+    | '/api/public/oauth/google/callback'
   id:
     | '__root__'
     | '/'
@@ -97,6 +109,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/voice/speak'
     | '/api/voice/transcribe'
+    | '/api/public/oauth/google/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +119,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   ApiVoiceSpeakRoute: typeof ApiVoiceSpeakRoute
   ApiVoiceTranscribeRoute: typeof ApiVoiceTranscribeRoute
+  ApiPublicOauthGoogleCallbackRoute: typeof ApiPublicOauthGoogleCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +166,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiVoiceSpeakRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/oauth/google/callback': {
+      id: '/api/public/oauth/google/callback'
+      path: '/api/public/oauth/google/callback'
+      fullPath: '/api/public/oauth/google/callback'
+      preLoaderRoute: typeof ApiPublicOauthGoogleCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +183,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   ApiVoiceSpeakRoute: ApiVoiceSpeakRoute,
   ApiVoiceTranscribeRoute: ApiVoiceTranscribeRoute,
+  ApiPublicOauthGoogleCallbackRoute: ApiPublicOauthGoogleCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { setCookie } from "@tanstack/react-start/server";
 
 export const Route = createFileRoute("/api/public/oauth/google/callback")({
   server: {
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/api/public/oauth/google/callback")({
         if (errParam) return back(`/settings?oauth_error=${encodeURIComponent(errParam)}`);
         if (!code || !stateRaw) return back(`/settings?oauth_error=missing_code`);
 
-        const { verifyState } = await import("@/lib/oauth-state.server");
+        const { verifyState, hashState } = await import("@/lib/oauth-state.server");
         let state;
         try {
           state = verifyState(stateRaw);
@@ -60,46 +61,35 @@ export const Route = createFileRoute("/api/public/oauth/google/callback")({
         const userinfo = uiRes.ok ? ((await uiRes.json()) as { email?: string }) : { email: undefined };
 
         const { encryptToken } = await import("@/lib/token-crypto.server");
-        const enc = encryptToken(tokens.access_token);
+        const accessEnc = encryptToken(tokens.access_token);
         const refreshEnc = tokens.refresh_token ? encryptToken(tokens.refresh_token) : null;
+        const handoff = encryptToken(
+          JSON.stringify({
+            state_hash: hashState(stateRaw),
+            user_id: state.uid,
+            account_type: state.type,
+            email_address: userinfo.email ?? null,
+            access_token_ciphertext: accessEnc.ciphertext,
+            refresh_token_ciphertext: refreshEnc?.ciphertext ?? null,
+            token_iv: accessEnc.iv,
+            refresh_token_iv: refreshEnc?.iv ?? null,
+            scope: tokens.scope,
+          }),
+        );
 
-        const backendUrl = process.env.SUPABASE_URL;
-        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        if (!backendUrl || !serviceKey) {
-          console.error("Missing backend environment variables for Google OAuth token save");
-          return back(`/settings?oauth_error=save_failed`);
-        }
-
-        const saveRes = await fetch(
-          `${backendUrl}/rest/v1/connected_accounts?on_conflict=user_id,account_type`,
+        setCookie(
+          "me2_google_oauth_result",
+          Buffer.from(JSON.stringify(handoff), "utf8").toString("base64url"),
           {
-            method: "POST",
-            headers: {
-              apikey: serviceKey,
-              "content-type": "application/json",
-              Prefer: "resolution=merge-duplicates",
-            },
-            body: JSON.stringify({
-              user_id: state.uid,
-              account_type: state.type,
-              email_address: userinfo.email ?? null,
-              access_token_ciphertext: enc.ciphertext,
-              refresh_token_ciphertext: refreshEnc?.ciphertext ?? null,
-              token_iv: enc.iv,
-              scope: tokens.scope,
-              connected_at: new Date().toISOString(),
-              last_synced: new Date().toISOString(),
-              is_active: true,
-            }),
+            path: "/",
+            httpOnly: true,
+            secure: origin.startsWith("https://"),
+            sameSite: "lax",
+            maxAge: 10 * 60,
           },
         );
 
-        if (!saveRes.ok) {
-          console.error("Failed to save connected account", saveRes.status, await saveRes.text());
-          return back(`/settings?oauth_error=save_failed`);
-        }
-
-        return back(new URL(state.redirect).pathname + new URL(state.redirect).search);
+        return back(`/settings?oauth_finish=1`);
       },
     },
   },

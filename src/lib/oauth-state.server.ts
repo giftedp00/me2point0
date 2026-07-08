@@ -1,5 +1,5 @@
 // Server-only signed state for OAuth CSRF protection.
-import { createHmac, timingSafeEqual, randomBytes } from "crypto";
+import { createHash, createHmac, timingSafeEqual, randomBytes } from "crypto";
 
 function key(): string {
   const k = process.env.TOKEN_ENCRYPTION_KEY;
@@ -40,6 +40,10 @@ export function verifyState(state: string): OAuthStatePayload {
   const payload = JSON.parse(fromB64url(body).toString("utf8")) as OAuthStatePayload;
   if (Date.now() - payload.t > 15 * 60 * 1000) throw new Error("State expired");
   return payload;
+}
+
+export function hashState(state: string): string {
+  return createHash("sha256").update(state).digest("hex");
 }
 
 export const GMAIL_SCOPES = [

@@ -49,6 +49,7 @@ export type Database = {
           is_active: boolean
           last_synced: string | null
           refresh_token_ciphertext: string | null
+          refresh_token_iv: string | null
           scope: string | null
           token_iv: string | null
           updated_at: string
@@ -64,6 +65,7 @@ export type Database = {
           is_active?: boolean
           last_synced?: string | null
           refresh_token_ciphertext?: string | null
+          refresh_token_iv?: string | null
           scope?: string | null
           token_iv?: string | null
           updated_at?: string
@@ -79,6 +81,7 @@ export type Database = {
           is_active?: boolean
           last_synced?: string | null
           refresh_token_ciphertext?: string | null
+          refresh_token_iv?: string | null
           scope?: string | null
           token_iv?: string | null
           updated_at?: string
@@ -158,36 +161,6 @@ export type Database = {
           redirect_url?: string
           state_hash?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      oauth_pending_tokens: {
-        Row: {
-          access_token_ciphertext: string
-          created_at: string
-          email_address: string | null
-          refresh_token_ciphertext: string | null
-          scope: string
-          state_hash: string
-          token_iv: string
-        }
-        Insert: {
-          access_token_ciphertext: string
-          created_at?: string
-          email_address?: string | null
-          refresh_token_ciphertext?: string | null
-          scope: string
-          state_hash: string
-          token_iv: string
-        }
-        Update: {
-          access_token_ciphertext?: string
-          created_at?: string
-          email_address?: string | null
-          refresh_token_ciphertext?: string | null
-          scope?: string
-          state_hash?: string
-          token_iv?: string
         }
         Relationships: []
       }

@@ -131,6 +131,66 @@ export type Database = {
         }
         Relationships: []
       }
+      oauth_connection_states: {
+        Row: {
+          account_type: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          redirect_url: string
+          state_hash: string
+          user_id: string
+        }
+        Insert: {
+          account_type: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          redirect_url: string
+          state_hash: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          redirect_url?: string
+          state_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oauth_pending_tokens: {
+        Row: {
+          access_token_ciphertext: string
+          created_at: string
+          email_address: string | null
+          refresh_token_ciphertext: string | null
+          scope: string
+          state_hash: string
+          token_iv: string
+        }
+        Insert: {
+          access_token_ciphertext: string
+          created_at?: string
+          email_address?: string | null
+          refresh_token_ciphertext?: string | null
+          scope: string
+          state_hash: string
+          token_iv: string
+        }
+        Update: {
+          access_token_ciphertext?: string
+          created_at?: string
+          email_address?: string | null
+          refresh_token_ciphertext?: string | null
+          scope?: string
+          state_hash?: string
+          token_iv?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           communication_style: string | null

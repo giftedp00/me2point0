@@ -49,6 +49,7 @@ export type Database = {
           is_active: boolean
           last_synced: string | null
           refresh_token_ciphertext: string | null
+          refresh_token_iv: string | null
           scope: string | null
           token_iv: string | null
           updated_at: string
@@ -64,6 +65,7 @@ export type Database = {
           is_active?: boolean
           last_synced?: string | null
           refresh_token_ciphertext?: string | null
+          refresh_token_iv?: string | null
           scope?: string | null
           token_iv?: string | null
           updated_at?: string
@@ -79,6 +81,7 @@ export type Database = {
           is_active?: boolean
           last_synced?: string | null
           refresh_token_ciphertext?: string | null
+          refresh_token_iv?: string | null
           scope?: string | null
           token_iv?: string | null
           updated_at?: string
@@ -127,6 +130,36 @@ export type Database = {
           summarize_emails_daily?: boolean
           updated_at?: string
           urgent_email_alerts?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oauth_connection_states: {
+        Row: {
+          account_type: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          redirect_url: string
+          state_hash: string
+          user_id: string
+        }
+        Insert: {
+          account_type: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          redirect_url: string
+          state_hash: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          redirect_url?: string
+          state_hash?: string
           user_id?: string
         }
         Relationships: []

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Loader2, LogOut, Plus, Trash2, X } from "lucide-react";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { ConnectionsPanel } from "@/components/connections-panel";
+import { finishGoogleOAuth } from "@/lib/integrations.functions";
 import { getProfile, updateProfile, deleteAccount } from "@/lib/profile.functions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -60,16 +61,37 @@ function SettingsPage() {
   const { session, loading } = useSession();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const finishOAuthFn = useServerFn(finishGoogleOAuth);
+  const finishingOAuthRef = useRef(false);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth" });
   }, [loading, session, navigate]);
 
   useEffect(() => {
+    if (loading || !session) return;
     const params = new URLSearchParams(window.location.search);
+    const finish = params.get("oauth_finish");
     const connected = params.get("connected");
     const err = params.get("oauth_error");
-    if (connected) {
+
+    if (finish && !finishingOAuthRef.current) {
+      finishingOAuthRef.current = true;
+      finishOAuthFn({ data: undefined })
+        .then((result) => {
+          const account = result.account_type === "gmail" ? "Gmail" : "Google Calendar";
+          toast.success(`${account} connected`);
+          qc.invalidateQueries({ queryKey: ["connected-accounts"] });
+          window.history.replaceState({}, "", "/settings");
+        })
+        .catch((error) => {
+          toast.error(`Couldn't connect: ${error instanceof Error ? error.message : "save_failed"}`);
+          window.history.replaceState({}, "", "/settings");
+        })
+        .finally(() => {
+          finishingOAuthRef.current = false;
+        });
+    } else if (connected) {
       toast.success(`${connected === "gmail" ? "Gmail" : "Google Calendar"} connected`);
       qc.invalidateQueries({ queryKey: ["connected-accounts"] });
       window.history.replaceState({}, "", "/settings");
@@ -77,7 +99,7 @@ function SettingsPage() {
       toast.error(`Couldn't connect: ${err}`);
       window.history.replaceState({}, "", "/settings");
     }
-  }, [qc]);
+  }, [finishOAuthFn, loading, qc, session]);
 
   if (loading || !session) {
     return (

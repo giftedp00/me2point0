@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { setCookie } from "@tanstack/react-start/server";
 
 export const Route = createFileRoute("/api/public/oauth/google/callback")({
   server: {
@@ -77,6 +76,7 @@ export const Route = createFileRoute("/api/public/oauth/google/callback")({
           }),
         );
 
+        const { setCookie } = await import("@tanstack/react-start/server");
         setCookie(
           "me2_google_oauth_result",
           Buffer.from(JSON.stringify(handoff), "utf8").toString("base64url"),

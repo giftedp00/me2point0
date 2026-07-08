@@ -63,11 +63,23 @@ export const Route = createFileRoute("/api/public/oauth/google/callback")({
         const enc = encryptToken(tokens.access_token);
         const refreshEnc = tokens.refresh_token ? encryptToken(tokens.refresh_token) : null;
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { error } = await supabaseAdmin
-          .from("connected_accounts")
-          .upsert(
-            {
+        const backendUrl = process.env.SUPABASE_URL;
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (!backendUrl || !serviceKey) {
+          console.error("Missing backend environment variables for Google OAuth token save");
+          return back(`/settings?oauth_error=save_failed`);
+        }
+
+        const saveRes = await fetch(
+          `${backendUrl}/rest/v1/connected_accounts?on_conflict=user_id,account_type`,
+          {
+            method: "POST",
+            headers: {
+              apikey: serviceKey,
+              "content-type": "application/json",
+              Prefer: "resolution=merge-duplicates",
+            },
+            body: JSON.stringify({
               user_id: state.uid,
               account_type: state.type,
               email_address: userinfo.email ?? null,
@@ -78,11 +90,12 @@ export const Route = createFileRoute("/api/public/oauth/google/callback")({
               connected_at: new Date().toISOString(),
               last_synced: new Date().toISOString(),
               is_active: true,
-            },
-            { onConflict: "user_id,account_type" },
-          );
-        if (error) {
-          console.error("Failed to save connected account", error);
+            }),
+          },
+        );
+
+        if (!saveRes.ok) {
+          console.error("Failed to save connected account", saveRes.status, await saveRes.text());
           return back(`/settings?oauth_error=save_failed`);
         }
 

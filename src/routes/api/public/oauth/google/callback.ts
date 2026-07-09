@@ -80,20 +80,20 @@ export const Route = createFileRoute("/api/public/oauth/google/callback")({
           }),
         );
 
-        const { setCookie } = await import("@tanstack/react-start/server");
-        setCookie(
-          "me2_google_oauth_result",
-          Buffer.from(JSON.stringify(handoff), "utf8").toString("base64url"),
-          {
-            path: "/",
-            httpOnly: true,
-            secure: origin.startsWith("https://"),
-            sameSite: "lax",
-            maxAge: 10 * 60,
-          },
-        );
+        const cookieValue = Buffer.from(JSON.stringify(handoff), "utf8").toString("base64url");
+        const secure = origin.startsWith("https://");
+        const cookie = [
+          `me2_google_oauth_result=${cookieValue}`,
+          "Path=/",
+          "HttpOnly",
+          "SameSite=Lax",
+          `Max-Age=${10 * 60}`,
+          secure ? "Secure" : "",
+        ]
+          .filter(Boolean)
+          .join("; ");
 
-        return back(`/settings?oauth_finish=1`);
+        return back(`/settings?oauth_finish=1`, cookie);
       },
     },
   },

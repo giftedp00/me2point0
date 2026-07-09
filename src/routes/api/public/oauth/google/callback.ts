@@ -10,7 +10,11 @@ export const Route = createFileRoute("/api/public/oauth/google/callback")({
         const errParam = url.searchParams.get("error");
         const origin = url.origin;
 
-        const back = (path: string) => Response.redirect(`${origin}${path}`, 302);
+        const back = (path: string, cookie?: string) => {
+          const headers = new Headers({ Location: `${origin}${path}` });
+          if (cookie) headers.append("Set-Cookie", cookie);
+          return new Response(null, { status: 302, headers });
+        };
 
         if (errParam) return back(`/settings?oauth_error=${encodeURIComponent(errParam)}`);
         if (!code || !stateRaw) return back(`/settings?oauth_error=missing_code`);

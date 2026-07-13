@@ -27,7 +27,8 @@ import { useVoiceRecorder, speak } from "@/hooks/use-voice";
 import { supabase } from "@/integrations/supabase/client";
 import { clearHistory, getHistory, sendMessage } from "@/lib/chat.functions";
 import { getProfile } from "@/lib/profile.functions";
-import { getConnectedAccounts } from "@/lib/integrations.functions";
+import { getConnectedAccounts, getUnreadEmails } from "@/lib/integrations.functions";
+import { MorningBriefing } from "@/components/morning-briefing";
 import mark from "@/assets/me2-mark.png";
 
 export const Route = createFileRoute("/")({
@@ -79,6 +80,8 @@ function AssistantApp({ displayName, skippedConnections }: { displayName: string
   const sendMessageFn = useServerFn(sendMessage);
   const clearHistoryFn = useServerFn(clearHistory);
   const getConnectedAccountsFn = useServerFn(getConnectedAccounts);
+  const getUnreadEmailsFn = useServerFn(getUnreadEmails);
+  const getProfileFn = useServerFn(getProfile);
 
   const historyQ = useQuery({
     queryKey: ["chat-history"],
@@ -88,6 +91,16 @@ function AssistantApp({ displayName, skippedConnections }: { displayName: string
   const accountsQ = useQuery({
     queryKey: ["connected-accounts"],
     queryFn: () => getConnectedAccountsFn({ data: undefined }),
+  });
+
+  const emailsQ = useQuery({
+    queryKey: ["unread-emails"],
+    queryFn: () => getUnreadEmailsFn({ data: undefined }),
+  });
+
+  const profileQ = useQuery({
+    queryKey: ["profile"],
+    queryFn: () => getProfileFn({ data: undefined }),
   });
 
   const anyConnected = (accountsQ.data ?? []).some((a) => a.is_active);
@@ -170,15 +183,15 @@ function AssistantApp({ displayName, skippedConnections }: { displayName: string
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Warm ambient wash */}
-      <div className="pointer-events-none fixed inset-x-0 top-0 h-[420px] opacity-70" style={{
-        background: "radial-gradient(60% 60% at 50% 0%, oklch(0.7 0.09 75 / 0.18), transparent 70%)",
+      {/* Premium ambient gradient background */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-[500px] opacity-60" style={{
+        background: "radial-gradient(ellipse 80% 50% at 50% 0%, oklch(0.75 0.12 75 / 0.25), oklch(0.5 0.08 220 / 0.1), transparent 75%)",
       }} />
 
-      <header className="relative mx-auto flex max-w-3xl items-center justify-between px-5 py-5">
+      <header className="relative mx-auto flex max-w-3xl items-center justify-between px-5 py-5 z-20">
         <div className="flex items-center gap-2.5">
           <img src={mark} alt="" width={32} height={32} className="h-8 w-8" />
-          <span className="font-display text-lg font-semibold tracking-tight">me2.0</span>
+          <span className="font-display text-lg font-semibold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">me2.0</span>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -253,10 +266,18 @@ function AssistantApp({ displayName, skippedConnections }: { displayName: string
         style={{ minHeight: "calc(100vh - 200px)" }}
       >
         {showBriefing ? (
-          <Briefing greeting={greeting} firstName={firstName} onQuickPrompt={(p) => {
-            setInput(p);
-            setTimeout(() => inputRef.current?.focus(), 0);
-          }} />
+          <MorningBriefing
+            greeting={greeting}
+            firstName={firstName}
+            unreadEmailCount={emailsQ.data?.emails?.length ?? 0}
+            focusAreas={(profileQ.data?.focus_areas as string[]) ?? []}
+            topGoals={profileQ.data?.top_goals ?? undefined}
+            onQuickPrompt={(p) => {
+              setInput(p);
+              setTimeout(() => inputRef.current?.focus(), 0);
+            }}
+            onVoiceStart={() => startRec()}
+          />
         ) : (
           <div className="space-y-6 pt-6">
             {messages.map((m) => (
@@ -281,78 +302,11 @@ function AssistantApp({ displayName, skippedConnections }: { displayName: string
   );
 }
 
-function Briefing({
-  greeting,
-  firstName,
-  onQuickPrompt,
-}: {
-  greeting: string;
-  firstName: string;
-  onQuickPrompt: (p: string) => void;
-}) {
-  const today = new Date().toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-
-  const domains = [
-    { icon: Briefcase, label: "Work", prompt: "Help me plan my work priorities for today." },
-    { icon: Users, label: "Family", prompt: "Help me be more present with my family this week." },
-    { icon: Wallet, label: "Finance", prompt: "Give me a quick check-in on my finances and what to focus on." },
-    { icon: HeartPulse, label: "Health", prompt: "Coach me on my health habits — sleep, movement, food." },
-    { icon: Target, label: "Goals", prompt: "Let's review my goals and set one thing to move forward today." },
-    { icon: HomeIcon, label: "Life", prompt: "What's one small upgrade I could make to my daily routine?" },
-  ];
-
-  return (
-    <div className="pt-10">
-      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{today}</p>
-      <h1 className="mt-3 font-display text-5xl font-semibold leading-[1.05] tracking-tight text-balance md:text-6xl">
-        {greeting},<br />
-        <span className="text-brass">{firstName}.</span>
-      </h1>
-      <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground text-balance">
-        I'm me2.0 — your executive assistant, planner, and quiet ally. Tell me what's on your mind, or pick a place to start.
-      </p>
-
-      <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-3">
-        {domains.map(({ icon: Icon, label, prompt }, i) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => onQuickPrompt(prompt)}
-            className="group animate-rise rounded-2xl border border-border bg-card/70 p-4 text-left shadow-soft transition hover:border-brass/40 hover:bg-card"
-            style={{ animationDelay: `${i * 40}ms` }}
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brass/15 text-brass">
-                <Icon className="h-4 w-4" />
-              </span>
-              <span className="font-medium">{label}</span>
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-muted-foreground line-clamp-2">
-              {prompt}
-            </p>
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-10 flex items-start gap-3 rounded-2xl border border-brass/25 bg-brass/8 p-4">
-        <Sparkle className="mt-0.5 h-4 w-4 shrink-0 text-brass" />
-        <p className="text-sm leading-relaxed text-foreground/80">
-          me2.0 remembers this conversation. The more you share about your goals, people, and routines, the sharper I get.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function MessageBubble({ role, content }: { role: UIMsg["role"]; content: string }) {
   if (role === "user") {
     return (
       <div className="flex animate-rise justify-end">
-        <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground shadow-soft">
+        <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-gradient-to-b from-primary to-primary/90 px-4 py-3 text-sm leading-relaxed text-primary-foreground shadow-soft">
           {content}
         </div>
       </div>
@@ -360,9 +314,9 @@ function MessageBubble({ role, content }: { role: UIMsg["role"]; content: string
   }
   return (
     <div className="flex animate-rise items-start gap-3">
-      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brass/20 text-[10px] font-semibold uppercase tracking-widest text-brass">
-        me
-      </span>
+      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brass/30 to-brass/15 text-brass">
+        <span className="text-xs font-semibold">ai</span>
+      </div>
       <div className="min-w-0 flex-1 pt-0.5">
         <MarkdownLite text={content} />
       </div>
@@ -377,12 +331,15 @@ function MarkdownLite({ text }: { text: string }) {
     <div className="space-y-3 text-[15px] leading-relaxed text-foreground/90">
       {blocks.map((block, i) => {
         const lines = block.split("\n");
-        const isList = lines.every((l) => /^\s*[-*]\s+/.test(l));
+        const isList = lines.every((l) => /^\s*[-•*]\s+/.test(l));
         if (isList) {
           return (
-            <ul key={i} className="ml-4 list-disc space-y-1.5 marker:text-brass">
+            <ul key={i} className="ml-4 list-none space-y-1.5">
               {lines.map((l, j) => (
-                <li key={j}>{renderInline(l.replace(/^\s*[-*]\s+/, ""))}</li>
+                <li key={j} className="flex gap-2">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-brass/60 opacity-70" />
+                  <span>{renderInline(l.replace(/^\s*[-•*]\s+/, ""))}</span>
+                </li>
               ))}
             </ul>
           );
@@ -397,7 +354,7 @@ function renderInline(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((p, i) =>
     p.startsWith("**") && p.endsWith("**") ? (
-      <strong key={i} className="font-semibold text-foreground">{p.slice(2, -2)}</strong>
+      <strong key={i} className="font-semibold text-brass">{p.slice(2, -2)}</strong>
     ) : (
       <span key={i}>{p}</span>
     ),
@@ -497,7 +454,7 @@ function Composer({
               type="submit"
               disabled={disabled || !input.trim()}
               aria-label="Send"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-soft transition hover:opacity-95 disabled:opacity-40"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-b from-primary to-primary/90 text-primary-foreground shadow-soft transition hover:shadow-md hover:to-primary/95 disabled:opacity-40"
             >
               {pending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>

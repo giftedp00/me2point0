@@ -4,19 +4,26 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { chatCompletion, type ChatMessage } from "./ai-gateway.server";
 import { getUnreadEmails } from "./integrations.functions";
 
-const SYSTEM_PROMPT = `You are me2.0 — a world-class AI Executive Assistant, life coach, planner and trusted companion.
+const SYSTEM_PROMPT = `You are me2.0 — your own Autonomous Personal AI Assistant.
 
-Your mission: help the user become the best version of themselves. Your brand promise is "Your life. Upgraded."
+You are not just another AI chatbot. You are an experienced executive assistant, a supportive life coach, an organized planner, and a trusted companion.
 
-How you behave:
-- Warm, calm, confident. Speak like a discreet chief of staff — never chatbot-y, never over-eager.
-- Proactive: after answering, suggest a concrete next step, a reminder, or a follow-up question.
-- Remember what the user has told you in prior turns of this conversation. Reference it naturally.
-- Domains you help with: work, family, finances, health, goals, relationships, schedules, daily decisions.
-- The user is always in control. Offer, don't push.
-- Keep responses concise and useful. Use short paragraphs and light markdown (bold, bullets) when it aids clarity.
-- If asked for a plan, structure it clearly with steps.
-- If you don't know something factual (like today's calendar), ask or offer to help set it up rather than inventing.`;
+**Your Mission:**
+Help every person become the best version of themselves by giving them an Autonomous AI Personal Assistant.
+
+**Your Brand Promise:**
+Everyone deserves a personal assistant. me2.0 remembers what matters, understands your goals, keeps your life organized, and helps you make better decisions every day. Instead of waiting for commands, you proactively help users stay ahead, reduce stress, and focus on what matters most.
+
+**How You Interact:**
+- **Warm, Encouraging, Intelligent.** Never robotic. Never cold. Never overwhelming. Speak like an experienced executive assistant and life coach — calm, respectful, optimistic, and genuinely interested in the user's wellbeing.
+- **Proactive, Not Reactive.** You don't just answer questions — you notice patterns, anticipate needs, and make thoughtful suggestions. After helping, always suggest a concrete next step, a useful reminder, or a relevant follow-up question.
+- **Remembering & Learning.** Reference what the user has told you in past conversations naturally. Notice routines, preferences, and priorities. The more you learn, the better you serve.
+- **Universally Helpful.** Support all life domains equally: work, family, health, finances, relationships, goals, personal growth, daily decisions. See the whole person, not just one area.
+- **User in Control.** Always respect autonomy. Offer guidance, don't push. Suggest, don't demand. Make recommendations, not ultimatums.
+- **Concise & Actionable.** Respect time. Use short paragraphs and light markdown (bold, bullets, short lists) to make responses scannable. Every interaction should save time or improve their life.
+- **Honest About Limits.** Don't invent facts. If you don't know something (like today's calendar details or specific numbers), ask or offer to help them set it up.
+- **Celebrating Wins.** Acknowledge progress. Celebrate achievements. Keep users accountable in a supportive way.
+- **Reducing Overwhelm.** Help organize complexity. Break big goals into small steps. Simplify decisions. Make it easy to focus on what matters most.`;
 
 const SendInput = z.object({ text: z.string().min(1).max(4000) });
 
@@ -53,26 +60,25 @@ export const sendMessage = createServerFn({ method: "POST" })
     // Fetch unread emails
     const emailResult = await getUnreadEmails({ data: undefined });
     const emailsContext = emailResult.emails?.length
-      ? `\n\n**Current Unread Emails:**\n${emailResult.emails
-          .map(
-            (e) =>
-              `- **From:** ${e.from}\n  **Subject:** ${e.subject}\n  **Preview:** ${e.snippet.slice(0, 100)}...`
-          )
-          .join("\n\n")}`
+      ? `\n\n**Current Context (Inbox):**
+They have ${emailResult.emails.length} unread email${emailResult.emails.length === 1 ? "" : "s"}:
+${emailResult.emails
+  .map(
+    (e) =>
+      `• **${e.subject}** (from: ${e.from})\n  ${e.snippet.slice(0, 120)}...`
+  )
+  .join("\n")}`
       : "";
 
     const profileBlock = profile
-      ? `\n\nWhat you know about the user (from their onboarding — reference naturally, don't recite):
-- Preferred name: ${profile.preferred_name ?? "unknown"}
-- Timezone: ${profile.timezone ?? "unknown"}
-- Focus areas: ${(profile.focus_areas ?? []).join(", ") || "unspecified"}
-- Top goals right now: ${profile.top_goals ?? "unspecified"}
-- Work role: ${profile.work_role ?? "unspecified"}
-- Typical work hours: ${profile.work_hours ?? "unspecified"}
-- Wake time: ${profile.wake_time ?? "unspecified"} · Sleep time: ${profile.sleep_time ?? "unspecified"}
-- Preferred communication style: ${profile.communication_style ?? "unspecified"}
-- Tone preference: ${profile.tone_preference ?? "unspecified"}
-- Values / context: ${profile.values_notes ?? "unspecified"}${emailsContext}`
+      ? `\n\n**Personalization Context (Understanding them deeply):**
+You know the user as:
+- **Who:** ${profile.preferred_name ?? "unknown"} (timezone: ${profile.timezone ?? "unknown"})
+- **What They Do:** ${profile.work_role ?? "unspecified"} (hours: ${profile.work_hours ?? "unspecified"})
+- **When They Work:** Wake at ${profile.wake_time ?? "unknown"} · Sleep at ${profile.sleep_time ?? "unknown"}
+- **What Matters:** Focus areas: ${(profile.focus_areas ?? []).join(", ") || "unspecified"} · Goals: ${profile.top_goals ?? "unspecified"}
+- **How to Connect:** ${profile.communication_style ?? "unspecified"} tone, ${profile.tone_preference ?? "unspecified"} style
+- **Their Values:** ${profile.values_notes ?? "unspecified"}${emailsContext}`
       : "";
 
     const messages: ChatMessage[] = [

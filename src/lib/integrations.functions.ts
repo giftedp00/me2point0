@@ -238,3 +238,62 @@ export const finishGoogleOAuth = createServerFn({ method: "POST" })
     deleteCookie("me2_google_oauth_result", { path: "/" });
     return { ok: true, account_type: payload.account_type };
   });
+
+export const getUnreadEmails = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { decryptToken } = await import("./token-crypto.server");
+    const { fetchUnreadEmails, refreshAccessToken } = await import("./gmail.server");
+
+    // Get Gmail account
+    const { data: account, error } = await supabase
+      .from("connected_accounts")
+      .select("access_token_ciphertext, token_iv, refresh_token_ciphertext, refresh_token_iv")
+      .eq("user_id", userId)
+      .eq("account_type", "gmail")
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    if (!account) {
+      return { emails: [], error: "Gmail not connected" };
+    }
+
+    if (!account.access_token_ciphertext || !account.token_iv) {
+      return { emails: [], error: "Invalid Gmail credentials" };
+    }
+
+    let accessToken = decryptToken(account.access_token_ciphertext, account.token_iv);
+
+    // Try to fetch emails with current token
+    let emails = await fetchUnreadEmails(accessToken, 10);
+
+    // If we got a 401, try to refresh and retry once
+    if (emails.length === 0 && account.refresh_token_ciphertext && account.refresh_token_iv) {
+      const refreshToken = decryptToken(
+        account.refresh_token_ciphertext,
+        account.refresh_token_iv
+      );
+      const newToken = await refreshAccessToken(refreshToken);
+
+      if (newToken) {
+        // Save the new token
+        const { encryptToken } = await import("./token-crypto.server");
+        const encrypted = encryptToken(newToken);
+        await supabase
+          .from("connected_accounts")
+          .update({
+            access_token_ciphertext: encrypted.ciphertext,
+            token_iv: encrypted.iv,
+          })
+          .eq("user_id", userId)
+          .eq("account_type", "gmail");
+
+        // Retry fetching emails
+        accessToken = newToken;
+        emails = await fetchUnreadEmails(accessToken, 10);
+      }
+    }
+
+    return { emails, error: null };
+  });

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { chatCompletion, type ChatMessage } from "./ai-gateway.server";
+import { getUnreadEmails } from "./integrations.functions";
 
 const SYSTEM_PROMPT = `You are me2.0 — a world-class AI Executive Assistant, life coach, planner and trusted companion.
 
@@ -49,6 +50,17 @@ export const sendMessage = createServerFn({ method: "POST" })
       .limit(40);
     if (histErr) throw new Error(histErr.message);
 
+    // Fetch unread emails
+    const emailResult = await getUnreadEmails({ data: undefined });
+    const emailsContext = emailResult.emails?.length
+      ? `\n\n**Current Unread Emails:**\n${emailResult.emails
+          .map(
+            (e) =>
+              `- **From:** ${e.from}\n  **Subject:** ${e.subject}\n  **Preview:** ${e.snippet.slice(0, 100)}...`
+          )
+          .join("\n\n")}`
+      : "";
+
     const profileBlock = profile
       ? `\n\nWhat you know about the user (from their onboarding — reference naturally, don't recite):
 - Preferred name: ${profile.preferred_name ?? "unknown"}
@@ -60,7 +72,7 @@ export const sendMessage = createServerFn({ method: "POST" })
 - Wake time: ${profile.wake_time ?? "unspecified"} · Sleep time: ${profile.sleep_time ?? "unspecified"}
 - Preferred communication style: ${profile.communication_style ?? "unspecified"}
 - Tone preference: ${profile.tone_preference ?? "unspecified"}
-- Values / context: ${profile.values_notes ?? "unspecified"}`
+- Values / context: ${profile.values_notes ?? "unspecified"}${emailsContext}`
       : "";
 
     const messages: ChatMessage[] = [

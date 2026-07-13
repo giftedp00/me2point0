@@ -151,8 +151,8 @@ function OnboardingPage() {
 
   const steps = [
     {
-      title: "Welcome",
-      subtitle: "Let's set up your me2.0 — five quiet questions.",
+      title: "Welcome to me2.0",
+      subtitle: "Your own Autonomous Personal AI Assistant. Let's get to know each other.",
       body: (
         <div className="space-y-4">
           <Field label="What should I call you?">
@@ -179,8 +179,8 @@ function OnboardingPage() {
       canNext: () => (form.preferred_name.trim() || defaultName).length > 0,
     },
     {
-      title: "Where should I focus?",
-      subtitle: "Pick the areas of life you'd like me involved in.",
+      title: "What matters most?",
+      subtitle: "Pick the life areas where I can help you stay organized and achieve more.",
       body: (
         <div className="flex flex-wrap gap-2">
           {FOCUS_OPTIONS.map((opt) => {
@@ -214,14 +214,14 @@ function OnboardingPage() {
       canNext: () => form.focus_areas.length > 0,
     },
     {
-      title: "What are you working toward?",
-      subtitle: "Share a few goals — big or small. I'll remember them.",
+      title: "Your goals & ambitions",
+      subtitle: "Share what you're working toward. The more I know, the better I support you.",
       body: (
-        <Field label="Top goals right now">
+        <Field label="What are your top goals right now?">
           <textarea
             value={form.top_goals}
             onChange={(e) => setForm({ ...form, top_goals: e.target.value })}
-            placeholder="e.g. Ship a new product by Q3, run a half-marathon, save for a home…"
+            placeholder="e.g. Ship a new product by Q3, run a half-marathon, save for a home down payment, strengthen relationships…"
             rows={5}
             className={inputCls + " resize-none"}
             maxLength={1000}
@@ -231,24 +231,24 @@ function OnboardingPage() {
       canNext: () => true,
     },
     {
-      title: "Your rhythm",
-      subtitle: "The shape of a typical day helps me time things well.",
+      title: "Your daily rhythm",
+      subtitle: "Understanding your schedule helps me time everything right for your life.",
       body: (
         <div className="space-y-4">
-          <Field label="What do you do (role / work)?">
+          <Field label="What's your role or what do you do?">
             <input
               value={form.work_role}
               onChange={(e) => setForm({ ...form, work_role: e.target.value })}
-              placeholder="e.g. Founder at a design studio"
+              placeholder="e.g. Founder, Product Manager, Consultant, Parent…"
               className={inputCls}
               maxLength={200}
             />
           </Field>
-          <Field label="Typical work hours">
+          <Field label="Your typical work hours">
             <input
               value={form.work_hours}
               onChange={(e) => setForm({ ...form, work_hours: e.target.value })}
-              placeholder="e.g. 9–6 weekdays, deep work in the morning"
+              placeholder="e.g. 9–6 weekdays, deep work mornings, flexible after 3pm…"
               className={inputCls}
               maxLength={120}
             />
@@ -276,11 +276,11 @@ function OnboardingPage() {
       canNext: () => true,
     },
     {
-      title: "How should I talk with you?",
-      subtitle: "So I feel like the right kind of assistant for you.",
+      title: "How should I be with you?",
+      subtitle: "Let me know your preferences so I feel like the right assistant for you.",
       body: (
         <div className="space-y-5">
-          <Field label="Communication style">
+          <Field label="How do you prefer to be communicated with?">
             <div className="flex flex-wrap gap-2">
               {STYLE_OPTIONS.map((opt) => (
                 <Chip
@@ -293,7 +293,7 @@ function OnboardingPage() {
               ))}
             </div>
           </Field>
-          <Field label="Tone">
+          <Field label="Tone preference">
             <div className="flex flex-wrap gap-2">
               {TONE_OPTIONS.map((opt) => (
                 <Chip
@@ -311,7 +311,7 @@ function OnboardingPage() {
               value={form.values_notes}
               onChange={(e) => setForm({ ...form, values_notes: e.target.value })}
               rows={4}
-              placeholder="Optional — family names, health notes, things that matter to you…"
+              placeholder="Optional — family names, what drives you, health notes, things that matter to you…"
               className={inputCls + " resize-none"}
               maxLength={1500}
             />
@@ -322,7 +322,7 @@ function OnboardingPage() {
     },
     {
       title: "Connect your world",
-      subtitle: "Link Gmail and Google Calendar so me2.0 can actually help you run your day.",
+      subtitle: "Link Gmail and Google Calendar so I can actually read your emails and manage your schedule.",
       body: (
         <div className="space-y-4">
           <ConnectionsPanel />
@@ -345,7 +345,10 @@ function OnboardingPage() {
       <header className="relative mx-auto flex max-w-2xl items-center justify-between px-5 py-5">
         <div className="flex items-center gap-2.5">
           <img src={mark} alt="" width={32} height={32} className="h-8 w-8" />
-          <span className="font-display text-lg font-semibold tracking-tight">me2.0</span>
+          <div>
+            <span className="font-display text-lg font-semibold tracking-tight">me2.0</span>
+            <p className="text-xs text-muted-foreground">Your Autonomous Personal AI Assistant</p>
+          </div>
         </div>
         <button
           type="button"
@@ -353,7 +356,7 @@ function OnboardingPage() {
           disabled={save.isPending}
           className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
-          Skip for now
+          {save.isPending ? "Saving..." : "Skip"}
         </button>
       </header>
 

@@ -121,3 +121,80 @@ export const clearHistory = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const generateMorningBriefing = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+
+    // Load profile and recent context
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select(
+        "preferred_name, timezone, focus_areas, top_goals, work_role, work_hours, wake_time, sleep_time, communication_style, tone_preference, values_notes",
+      )
+      .eq("id", userId)
+      .maybeSingle();
+
+    // Get unread emails for context
+    const emailResult = await getUnreadEmails({ data: undefined });
+    const emailCount = emailResult.emails?.length ?? 0;
+
+    const briefingPrompt = `Create a personalized morning briefing for ${profile?.preferred_name || "me"}.
+
+Context:
+- Focus areas: ${(profile?.focus_areas ?? []).join(", ") || "various"}
+- Current goals: ${profile?.top_goals || "unspecified"}
+- Work role: ${profile?.work_role || "unspecified"}
+- Unread emails: ${emailCount}
+- Communication style: ${profile?.communication_style || "standard"}
+
+Generate a warm, energizing morning briefing that:
+1. Greets them encouragingly
+2. Highlights the ${emailCount} unread email${emailCount === 1 ? "" : "s"} that may need attention
+3. Suggests 2-3 key priorities for today based on their goals and focus areas
+4. Includes a motivational insight relevant to their values
+5. Reminds them of one healthy habit to focus on today
+
+Keep it concise, warm, and actionable. Use markdown for formatting.`;
+
+    const reply = await chatCompletion([{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: briefingPrompt }]);
+
+    return { briefing: reply };
+  });
+
+export const generateEveningReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ dayNotes: z.string().optional() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Load profile
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select(
+        "preferred_name, timezone, focus_areas, top_goals, work_role, communication_style, tone_preference, values_notes",
+      )
+      .eq("id", userId)
+      .maybeSingle();
+
+    const reviewPrompt = `Create a personalized evening reflection for ${profile?.preferred_name || "me"}.
+
+${data.dayNotes ? `Notes from their day: ${data.dayNotes}` : "They didn't share specific notes, but you can infer from the conversation."}
+
+Values/interests: ${profile?.values_notes || "various"}
+Goals they're working toward: ${profile?.top_goals || "unspecified"}
+
+Generate a supportive evening review that:
+1. Celebrates them warmly and authentically
+2. Asks reflective questions about what they accomplished today
+3. Acknowledges progress toward their goals (even small wins)
+4. Suggests 1-2 things to do differently tomorrow for better results
+5. Includes motivational encouragement for the night and next day
+
+Keep it concise, warm, and genuinely supportive. Use markdown for formatting. Feel like you're genuinely proud of them and want to help them be even better tomorrow.`;
+
+    const reply = await chatCompletion([{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: reviewPrompt }]);
+
+    return { review: reply };
+  });
